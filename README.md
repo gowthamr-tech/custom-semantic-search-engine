@@ -214,9 +214,3 @@ curl "http://127.0.0.1:8000/search?q=artificial%20intelligence%20in%20finance"
 - `/index` bonus endpoint: completed
 - Structured modular source code: completed
 - README with setup and sample calls: completed
-
-## Interview Summary
-
-You can explain the project like this:
-
-> I built a FastAPI-based document search engine that manually implements TF-IDF and cosine similarity without using external NLP libraries. The system indexes text documents from a local folder, converts both documents and search queries into vectors, compares them using cosine similarity, and returns the top 3 most relevant documents with a score and snippet.
