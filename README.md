@@ -1,82 +1,51 @@
-# Custom Semantic Document Search Engine
+# Semantic Document Search Engine
 
-A backend application that finds the most relevant text documents for a user query using:
+This project is a small backend application built with FastAPI. It searches a folder of text documents and returns the top 3 most relevant files for a user query.
 
-- manual TF-IDF vectorization
-- manual cosine similarity
-- FastAPI for the API layer
+The search logic is implemented manually using:
 
-This solution follows the task constraints strictly:
+- TF-IDF vectorization
+- cosine similarity
 
-- no pretrained embeddings
-- no external NLP APIs
-- no `scikit-learn`, `gensim`, `spaCy`, or similar NLP/vectorizer libraries
-- all text processing and similarity logic implemented manually in Python
-
-## Features
-
-- `GET /search?q=<query>` returns the top 3 most relevant documents
-- `POST /index` rebuilds the document index if files are added or changed
-- each result returns:
-  - document filename
-  - similarity score
-  - short snippet
-
-## Tech Stack
-
-- Python
-- FastAPI
-- Standard Python libraries: `math`, `re`, `collections`, `pathlib`
+No external NLP libraries like `scikit-learn`, `gensim`, `spaCy`, or pretrained embeddings are used.
 
 ## Project Structure
 
 ```text
 custom-semantic-search-engine/
 ├── app/
-│   ├── config.py
 │   ├── main.py
+│   ├── config.py
 │   ├── models.py
 │   ├── search_engine.py
 │   ├── text_processing.py
 │   └── vectorizer.py
 ├── documents/
-├── .gitignore
-├── Dockerfile
 ├── requirements.txt
+├── Dockerfile
 └── README.md
 ```
 
 ## How It Works
 
-1. The application reads all `.txt` files from the `documents/` folder.
-2. Each document is normalized and tokenized using a regex-based tokenizer.
-3. TF is calculated manually:
-
-```text
-TF(term) = count of term in document / total terms in document
-```
-
-4. IDF is calculated manually:
-
-```text
-IDF(term) = log((1 + total_documents) / (1 + documents_containing_term)) + 1
-```
-
-5. Each document is converted into a TF-IDF vector.
-6. The query is converted into the same vector space.
-7. Cosine similarity is computed manually between the query vector and each document vector.
-8. Results are sorted by score and the top 3 are returned.
+1. Read all `.txt` files from the `documents/` folder.
+2. Tokenize the text using Python `re`.
+3. Calculate TF manually for each term.
+4. Calculate IDF manually across all documents.
+5. Build TF-IDF vectors for documents and the query.
+6. Compute cosine similarity between the query and each document.
+7. Sort by score and return the top 3 matches.
 
 ## API Endpoints
 
-### `GET /search`
+### `GET /search?q=<query>`
 
-Searches the indexed documents for the given query.
+Searches the indexed documents and returns the top 3 results.
 
 Example:
 
-```http
-GET /search?q=artificial intelligence in finance
+```bash
+curl "http://127.0.0.1:8000/search?q=artificial%20intelligence%20in%20finance"
 ```
 
 Example response:
@@ -90,16 +59,6 @@ Example response:
       "document": "finance_ai.txt",
       "score": 0.8721,
       "snippet": "AI systems are transforming investment research by automating market analysis and identifying patterns in financial data."
-    },
-    {
-      "document": "banking_automation.txt",
-      "score": 0.7458,
-      "snippet": "Banks are using automation and machine learning to reduce fraud, improve compliance, and speed up operations."
-    },
-    {
-      "document": "fintech_growth.txt",
-      "score": 0.6914,
-      "snippet": "Fintech companies use data-driven systems to improve forecasting, lending decisions, and customer experience."
     }
   ]
 }
@@ -107,110 +66,66 @@ Example response:
 
 ### `POST /index`
 
-Rebuilds the document index after files are added, removed, or updated.
+Rebuilds the index after documents are added, removed, or updated.
 
-Example response:
-
-```json
-{
-  "indexed_documents": 50,
-  "vocabulary_size": 4128,
-  "documents_directory": "/absolute/path/to/custom-semantic-search-engine/documents"
-}
-```
-
-## Local Setup
-
-### 1. Clone or open the project
+Example:
 
 ```bash
-cd /path/to/custom-semantic-search-engine
+curl -X POST "http://127.0.0.1:8000/index"
 ```
 
-### 2. Create a virtual environment
+## Run Locally
+
+### 1. Create and activate a virtual environment
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Add documents
+### 3. Add documents
 
-Place the given `.txt` files inside:
+Put the `.txt` files inside the `documents/` folder.
 
-```text
-documents/
-```
-
-### 5. Run the server
+### 4. Start the server
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The API will be available at:
+Open:
 
-- `http://127.0.0.1:8000`
-- Swagger docs: `http://127.0.0.1:8000/docs`
+- `http://127.0.0.1:8000/docs`
 
-## Docker Setup
+## Run with Docker
 
-### Build the image
+Build:
 
 ```bash
 docker build -t semantic-search-engine .
 ```
 
-### Run the container
+Run:
 
 ```bash
 docker run -p 8000:8000 semantic-search-engine
 ```
 
-If you want the container to use your local `documents/` folder directly:
+If you want to use your local `documents/` folder:
 
 ```bash
 docker run -p 8000:8000 -v "$(pwd)/documents:/app/documents" semantic-search-engine
 ```
 
-Then open:
+## Notes
 
-- `http://127.0.0.1:8000/docs`
-
-## Sample API Calls
-
-### Rebuild the index
-
-```bash
-curl -X POST "http://127.0.0.1:8000/index"
-```
-
-### Search documents
-
-```bash
-curl "http://127.0.0.1:8000/search?q=artificial%20intelligence%20in%20finance"
-```
-
-## Important Notes
-
-- The search engine indexes only `.txt` files.
+- Only `.txt` files are indexed.
 - Empty files are skipped.
-- If new files are added after startup, call `POST /index` to refresh the corpus.
-- The optional UI mentioned in the task is not included, since the backend requirement is fully completed.
-
-## Task Requirement Mapping
-
-- Custom TF-IDF vectorization: completed
-- Manual cosine similarity: completed
-- Backend in FastAPI: completed
-- `/search` endpoint: completed
-- Top 3 results with filename, score, snippet: completed
-- `/index` bonus endpoint: completed
-- Structured modular source code: completed
-- README with setup and sample calls: completed
+- If you change the document folder after the server starts, call `POST /index`.
+- The main logic is in `app/text_processing.py`, `app/vectorizer.py`, and `app/search_engine.py`.
